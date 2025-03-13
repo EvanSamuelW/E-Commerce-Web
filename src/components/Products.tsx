@@ -140,11 +140,12 @@ const Products = () => {
                   >
                     {product.price}
                   </Typography>
-                  <Link to={`/ProductDetail`} style={{ textDecoration: 'none' }}>
-                    <Button variant="contained" color="primary" fullWidth>
-                      Product Detail
-                    </Button>
-                  </Link>
+                  
+                  <Link to={`/ProductDetail`} state={{ product }}>
+                <Button variant="contained" color="primary" fullWidth>
+                  Product Detail
+                </Button>
+              </Link>
                 </CardContent>
               </Card>
             </Grid>

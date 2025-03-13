@@ -5,7 +5,6 @@ import { Card, CardContent, IconButton, Typography, Grid, Button } from '@mui/ma
 import RemoveIcon from '@mui/icons-material/Remove';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-import {theme} from '../utils/theme';
 
 interface CartItemProps {
   item: CartItemType;

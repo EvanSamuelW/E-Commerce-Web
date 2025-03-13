@@ -1,6 +1,6 @@
 // Cart.tsx
 import React, { useState } from 'react';
-import { CartItemType, CartState } from '../utils/types';
+import {  CartState } from '../utils/types';
 import CartItem from './CartItem';
 import { Button, Typography, Container, Box, Grid } from '@mui/material';
 

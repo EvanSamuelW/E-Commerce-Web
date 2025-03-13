@@ -2,66 +2,57 @@ import { Container, Box, Grid, Typography, Button, Rating, Card, CardMedia, Card
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import React, { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface State extends SnackbarOrigin {
   open: boolean;
 }
-
-// Sample Product Data
-const product = {
-  id: 1,
-  name: 'Wireless Headphones',
-  description: `
-    <ul>
-      <li><strong>LONG BATTERY LIFE:</strong> With up to 50-hour battery life and quick charging, you’ll have enough power for multi-day road trips and long festival weekends. (USB Type-C Cable included)</li>
-      <li><strong>HIGH QUALITY SOUND:</strong> Great sound quality customizable to your music preference with EQ Custom on the Sony | Headphones Connect App.</li>
-      <li><strong>LIGHT & COMFORTABLE:</strong> The lightweight build and swivel earcups gently slip on and off, while the adjustable headband, cushion and soft ear pads give you all-day comfort.</li>
-      <li><strong>CRYSTAL CLEAR CALLS:</strong> A built-in microphone provides you with hands-free calling. No need to even take your phone from your pocket.</li>
-      <li><strong>MULTIPOINT CONNECTION:</strong> Quickly switch between two devices at once.</li>
-      <li><strong>AVAILABLE IN FOUR COLORS:</strong> With Black, Blue, White, and Cappuccino to choose from, find the color that suits you best.</li>
-      <li><strong>GIVE YOUR MUSIC A BOOST:</strong> Boost the quality of compressed music files and enjoy streaming music with high quality sound through DSEE.</li>
-      <li><strong>FIND YOUR HEADPHONES WITH FAST PAIR:</strong> Easily find your missing headphones by sound or check their last known location in Google’s Find My Device app on your smartphone.</li>
-      <li><strong>EASY CONNECTION TO YOUR PC:</strong> Swift Pair makes it quick and easy to pair your headphones with your Windows 10 computer via Bluetooth.</li>
-    </ul>
-  `,
-  price: '$199.99',
-  image: '/images/product1.jpg', // Replace with the actual image path
-  rating: 4.5,
-  availableSizes: ['10 Inch', '12 Inch', '16 Inch'],  // Available Sizes
-  availableColors: ['Red', 'Blue', 'Black'],  // Available Colors
-};
 
 const relatedProducts = [
   {
     id: 2,
     name: 'Smartwatch',
     price: '$129.99',
-    image: '/images/product2.jpg', // Replace with actual image
+    image: '/images/product2.jpg',
   },
   {
     id: 3,
     name: 'Gaming Mouse',
     price: '$49.99',
-    image: '/images/product3.jpg', // Replace with actual image
+    image: '/images/product3.jpg',
   },
   {
     id: 4,
     name: 'Portable Speaker',
     price: '$79.99',
-    image: '/images/product4.jpg', // Replace with actual image
+    image: '/images/product4.jpg',
   },
 ];
 
 const ProductDetail = () => {
-  // State to manage quantity, selected size, and selected color
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Handle the case where `product` is not found in location state
+  const { product } = location.state || {}; // Check for undefined or null state
+
+  // Early return to handle product not found but after declaring useState hooks
+  if (!product) {
+    navigate('/'); // Redirect to home page or product listing if product not found
+    return <Typography variant="h6" color="error">Product not found!</Typography>;
+  }
+  console.log(product);
+  // Declare your hooks after checking the product existence
   const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState(product.availableSizes[0]); // Default size
-  const [selectedColor, setSelectedColor] = useState(product.availableColors[0]); // Default color
+  const [selectedSize, setSelectedSize] = useState<string>(product.productSizes[0]); // Default size (with explicit type)
+  const [selectedColor, setSelectedColor] = useState<string>(product.productColors[0]); // Default color (with explicit type)
+
   const [state, setState] = React.useState<State>({
     open: false,
     vertical: 'top',
     horizontal: 'center',
   });
+
   const { vertical, horizontal, open } = state;
 
   const handleClick = (newState: SnackbarOrigin) => () => {
@@ -106,7 +97,7 @@ const ProductDetail = () => {
           <Typography variant="h3" sx={{ fontWeight: 700 }} gutterBottom>
             {product.name}
           </Typography>
-          <Rating value={product.rating} precision={0.5} readOnly sx={{ mb: 2 }} />
+          <Rating value={3.0} precision={0.5} readOnly sx={{ mb: 2 }} />
           <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main', mb: 2 }}>
             {product.price}
           </Typography>
@@ -119,9 +110,9 @@ const ProductDetail = () => {
             <InputLabel>Size</InputLabel>
             <Select
               value={selectedSize}
-              onChange={(e) => setSelectedSize(e.target.value)}
+              onChange={(e) => setSelectedSize(e.target.value as string)} // Type cast as string
             >
-              {product.availableSizes.map((size) => (
+              {product.productSizes.map((size: string) => ( // Explicitly type size as string
                 <MenuItem key={size} value={size}>
                   {size}
                 </MenuItem>
@@ -134,9 +125,9 @@ const ProductDetail = () => {
             <InputLabel>Color</InputLabel>
             <Select
               value={selectedColor}
-              onChange={(e) => setSelectedColor(e.target.value)}
+              onChange={(e) => setSelectedColor(e.target.value as string)} // Type cast as string
             >
-              {product.availableColors.map((color) => (
+              {product.productColors.map((color: string) => ( // Explicitly type color as string
                 <MenuItem key={color} value={color}>
                   {color}
                 </MenuItem>
@@ -201,7 +192,13 @@ const ProductDetail = () => {
                     {relatedProduct.price}
                   </Typography>
 
-                  <Button variant="contained" color="primary" fullWidth>
+                  {/* View Details Button */}
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    onClick={() => navigate(`/product-detail`, { state: { product: relatedProduct } })}
+                  >
                     View Details
                   </Button>
                 </CardContent>
@@ -220,9 +217,8 @@ const ProductDetail = () => {
           message="Added to Wishlist"
           autoHideDuration={3000}
           key={vertical + horizontal}
-
-      />
-    </Box>
+        />
+      </Box>
     </Container>
   );
 };
