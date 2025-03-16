@@ -1,13 +1,17 @@
-export interface CartItemType {
-    id: number;
-    name: string;
-    price: number;
-    size: string,
-        color: string,
-    quantity: number;
-    imageUrl: string
+import {Product} from './product';
+
+export interface CartItems {
+    cartItemId: number;
+    addedAt: string; 
+    chosenColor: string; 
+    chosenSize: string;
+    quantity: number; 
+    product: Product; 
   }
-  
-  export interface CartState {
-    items: CartItemType[];
+
+  export interface wishlistItems {
+    wishlistItemId: number;
+    addedAt: string; 
+    product: Product; 
   }
+

@@ -6,6 +6,7 @@ export interface Product {
     productSizes: string[],
     // quantity: number;
     description: string,
-    image: string
+    image: string,
+    category: string
   }
   

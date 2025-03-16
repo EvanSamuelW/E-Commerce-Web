@@ -1,8 +1,7 @@
-import { Container, Box, Grid, Typography, Button, Rating, Card, CardMedia, CardContent, IconButton, TextField, FormControl, InputLabel, Select, MenuItem, Snackbar, SnackbarOrigin } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
-import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Container, Box, Grid, Button, Rating, Card, CardMedia, CardContent, FormControl, InputLabel, Select, MenuItem, Snackbar, SnackbarOrigin, Typography } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 
 interface State extends SnackbarOrigin {
   open: boolean;
@@ -29,24 +28,27 @@ const relatedProducts = [
   },
 ];
 
+interface Product {
+  id: number;
+  name: string;
+  price: string;
+  image: string;
+  description: string;
+  productSizes: string[];
+  productColors: string[];
+}
+
 const ProductDetail = () => {
-  const location = useLocation();
+  const { productId } = useParams<{ productId: string }>();  // Extract productId from the URL
   const navigate = useNavigate();
 
-  // Handle the case where `product` is not found in location state
-  const { product } = location.state || {}; // Check for undefined or null state
+  const [loading, setLoading] = useState(true);  // Initially loading
+  const [error, setError] = useState('');
+  const [product, setProduct] = useState<Product | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string>(''); // Initialize with default value
+  const [selectedColor, setSelectedColor] = useState<string>(''); // Initialize with default value
 
-  // Early return to handle product not found but after declaring useState hooks
-  if (!product) {
-    navigate('/'); // Redirect to home page or product listing if product not found
-    return <Typography variant="h6" color="error">Product not found!</Typography>;
-  }
-  console.log(product);
-  // Declare your hooks after checking the product existence
-  const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState<string>(product.productSizes[0]); // Default size (with explicit type)
-  const [selectedColor, setSelectedColor] = useState<string>(product.productColors[0]); // Default color (with explicit type)
-
+  const [snackbarMessage, setSnackbarMessage] = useState<string>('');
   const [state, setState] = React.useState<State>({
     open: false,
     vertical: 'top',
@@ -55,25 +57,124 @@ const ProductDetail = () => {
 
   const { vertical, horizontal, open } = state;
 
-  const handleClick = (newState: SnackbarOrigin) => () => {
+  useEffect(() => {
+    const fetchProduct = async () => {
+      const token = localStorage.getItem('authToken');
+      
+      try {
+        const response = await fetch(`http://localhost:8080/api/products/${productId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          const errorResponse = await response.json();
+          throw new Error(errorResponse.message || 'Failed to fetch product');
+        }
+
+        const data = await response.json();
+        setProduct(data);
+      } catch (err) {
+        setError('Failed to load product');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (productId) {
+      fetchProduct();
+    }
+  }, [productId]);
+
+  // Handle conditional rendering based on loading or error state
+  if (loading) {
+    return <Typography variant="h6" color="primary">Loading...</Typography>;
+  }
+
+  if (error) {
+    return <Typography variant="h6" color="error">{error}</Typography>;
+  }
+
+
+
+  const addToCart = async (productId: any, choosenColor: string, choosenSize: string): Promise<void> => {
+    try {
+      console.log("Adding to cart...");
+      const token = localStorage.getItem('authToken'); // Get token from localStorage
+      if (!token) {
+        throw new Error('No authentication token found.');
+      }
+      
+      const response = await fetch('http://localhost:8080/api/carts/add-item', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId,
+          choosenSize,
+          choosenColor,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorResponse = await response.json();
+        throw new Error(errorResponse.message || 'Failed to add item to cart');
+      }
+
+      const responseData = await response.json();
+      console.log('Added to cart successfully:', responseData);
+      handleClick({ vertical: 'bottom', horizontal: 'center' }, "Added to cart Successfully");
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
+  };
+
+  const addToWishlist = async (productId: any): Promise<void> => {
+    try {
+      console.log("Adding to wishlist...");
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('No authentication token found.');
+      }
+
+      const response = await fetch(`http://localhost:8080/api/wishlists/add-item?productId=${productId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorResponse = await response.json();
+        throw new Error(errorResponse.message || 'Failed to add item to wishlist');
+      }
+
+      const responseData = await response.json();
+      console.log('Added to wishlist successfully:', responseData);
+      handleClick({ vertical: 'bottom', horizontal: 'center' }, "Added to wishlist");
+    } catch (error) {
+      console.error('Error adding to wishlist:', error);
+    }
+  };
+
+  const handleClick = (newState: SnackbarOrigin, message: string) => () => {
     setState({ ...newState, open: true });
+    setSnackbarMessage(message);
   };
 
   const handleClose = () => {
     setState({ ...state, open: false });
   };
 
-  // Function to increase the quantity
-  const increaseQuantity = () => setQuantity((prevQuantity) => prevQuantity + 1);
-
-  // Function to decrease the quantity (ensure it doesn't go below 1)
-  const decreaseQuantity = () => setQuantity((prevQuantity) => (prevQuantity > 1 ? prevQuantity - 1 : 1));
-
   return (
     <Container sx={{ pt: 8, pb: 6 }}>
-      {/* Product Detail Section */}
       <Grid container spacing={4}>
-        {/* Product Image */}
         <Grid item xs={12} md={6}>
           <Box
             sx={{
@@ -85,34 +186,37 @@ const ProductDetail = () => {
             }}
           >
             <img
-              src={product.image}
-              alt={product.name}
-              style={{ maxWidth: '100%', height: '500px', objectFit: 'contain' }} // Adjusted height
+              src={`http://localhost:8080${product?.image}`}
+              alt={product?.name}
+              style={{ maxWidth: '100%', height: '500px', objectFit: 'contain' }}
             />
           </Box>
         </Grid>
 
-        {/* Product Information */}
         <Grid item xs={12} md={6}>
           <Typography variant="h3" sx={{ fontWeight: 700 }} gutterBottom>
-            {product.name}
+            {product?.name}
           </Typography>
           <Rating value={3.0} precision={0.5} readOnly sx={{ mb: 2 }} />
           <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main', mb: 2 }}>
-            {product.price}
+            {product?.price}
           </Typography>
 
-          {/* Product Description (HTML Content) */}
-          <Typography variant="body1" paragraph sx={{ color: 'text.secondary' }} dangerouslySetInnerHTML={{ __html: product.description }} />
-
-          {/* Size Selector */}
+          <Typography 
+      variant="body1" 
+      paragraph 
+      sx={{ color: 'text.secondary' }} 
+      dangerouslySetInnerHTML={{
+        __html: DOMPurify.sanitize(product?.description || '')
+      }} 
+/>
           <FormControl sx={{ mb: 2, mr: 2 }}>
             <InputLabel>Size</InputLabel>
             <Select
               value={selectedSize}
-              onChange={(e) => setSelectedSize(e.target.value as string)} // Type cast as string
+              onChange={(e) => setSelectedSize(e.target.value as string)}
             >
-              {product.productSizes.map((size: string) => ( // Explicitly type size as string
+              {product?.productSizes.map((size: string) => (
                 <MenuItem key={size} value={size}>
                   {size}
                 </MenuItem>
@@ -120,14 +224,13 @@ const ProductDetail = () => {
             </Select>
           </FormControl>
 
-          {/* Color Selector */}
           <FormControl sx={{ mb: 2 }}>
             <InputLabel>Color</InputLabel>
             <Select
               value={selectedColor}
-              onChange={(e) => setSelectedColor(e.target.value as string)} // Type cast as string
+              onChange={(e) => setSelectedColor(e.target.value as string)}
             >
-              {product.productColors.map((color: string) => ( // Explicitly type color as string
+              {product?.productColors.map((color: string) => (
                 <MenuItem key={color} value={color}>
                   {color}
                 </MenuItem>
@@ -135,41 +238,26 @@ const ProductDetail = () => {
             </Select>
           </FormControl>
 
-          {/* Quantity Adjuster */}
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Typography sx={{ mr: 2 }}>Quantity:</Typography>
-            <IconButton onClick={decreaseQuantity} color="primary" aria-label="decrease quantity">
-              <RemoveIcon />
-            </IconButton>
-            <TextField
-              value={quantity}
-              onChange={(e) => setQuantity(Number(e.target.value))}
-              inputProps={{
-                min: 1,
-                style: { textAlign: 'center' }, // Center align the quantity
-              }}
-              type="number"
-              size="small"
-              sx={{ width: 70 }}
-            />
-            <IconButton onClick={increaseQuantity} color="primary" aria-label="increase quantity">
-              <AddIcon />
-            </IconButton>
-          </Box>
-
-          {/* Add to Cart Button */}
-          <Button variant="contained" color="primary" sx={{ padding: '12px 24px', mb: 2, mr: 2 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ padding: '12px 24px', mb: 2, mr: 2 }}
+            onClick={() => addToCart(product?.id, selectedColor, selectedSize)}
+          >
             Add to Cart
           </Button>
 
-          {/* Add to Wishlist Button */}
-          <Button variant="outlined" color="secondary" sx={{ padding: '12px 24px', mb: 2 }} onClick={handleClick({ vertical: 'bottom', horizontal: 'center' })}>
+          <Button
+            variant="outlined"
+            color="secondary"
+            sx={{ padding: '12px 24px', mb: 2 }}
+            onClick={() => addToWishlist(product?.id)}
+          >
             Add to Wishlist
           </Button>
         </Grid>
       </Grid>
 
-      {/* Related Products Section */}
       <Box sx={{ mt: 8 }}>
         <Typography variant="h4" sx={{ fontWeight: 700, mb: 4 }} align="center">
           Related Products
@@ -192,12 +280,11 @@ const ProductDetail = () => {
                     {relatedProduct.price}
                   </Typography>
 
-                  {/* View Details Button */}
                   <Button
                     variant="contained"
                     color="primary"
                     fullWidth
-                    onClick={() => navigate(`/product-detail`, { state: { product: relatedProduct } })}
+                    onClick={() => navigate(`/product-detail/${relatedProduct.id}`)}
                   >
                     View Details
                   </Button>
@@ -208,13 +295,12 @@ const ProductDetail = () => {
         </Grid>
       </Box>
 
-      {/* Snackbar */}
       <Box sx={{ width: 500 }}>
         <Snackbar
           anchorOrigin={{ vertical, horizontal }}
           open={open}
           onClose={handleClose}
-          message="Added to Wishlist"
+          message={snackbarMessage}
           autoHideDuration={3000}
           key={vertical + horizontal}
         />
