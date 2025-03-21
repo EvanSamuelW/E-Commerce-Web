@@ -209,8 +209,8 @@ const ProductDetail = () => {
       dangerouslySetInnerHTML={{
         __html: DOMPurify.sanitize(product?.description || '')
       }} 
-/>
-          <FormControl sx={{ mb: 2, mr: 2 }}>
+/>        
+          {product?.productSizes && product.productSizes.length > 1 &&  <FormControl sx={{ mb: 2, mr: 2, width: 100 }}>
             <InputLabel>Size</InputLabel>
             <Select
               value={selectedSize}
@@ -222,9 +222,9 @@ const ProductDetail = () => {
                 </MenuItem>
               ))}
             </Select>
-          </FormControl>
-
-          <FormControl sx={{ mb: 2 }}>
+          </FormControl>}
+         
+              {product?.productColors && product.productColors.length > 1 && <FormControl sx={{ mb: 2, mr:2, width: 100 }}>
             <InputLabel>Color</InputLabel>
             <Select
               value={selectedColor}
@@ -236,7 +236,8 @@ const ProductDetail = () => {
                 </MenuItem>
               ))}
             </Select>
-          </FormControl>
+          </FormControl>}
+          
 
           <Button
             variant="contained"

@@ -11,6 +11,7 @@ const Cart = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
+  const [cartId, setCartId] = useState(0);
 
   const [carts, setCarts] = useState<any[]>([]);  // Use any[] if the structure of the items can be dynamic, otherwise define a proper type
   const [state, setState] = React.useState<State>({
@@ -44,6 +45,7 @@ const Cart = () => {
         const data = await response.json();
         console.log(data);
         setCarts(data);  // Assuming the data structure contains individual cart items directly.
+        setCartId(data[0].cartId);
       } catch (err) {
         setError('Failed to load carts');
       } finally {
@@ -213,11 +215,13 @@ const Cart = () => {
         </Box>
       )}
 
-      {/* Checkout Dialog */}
+
       <Checkout
+      cartId={cartId}
+      totalAmount={calculateTotal()}
         open={openDialog}
         handleCloseDialog={handleCloseDialog}
-      />
+      /> 
     </Container>
   );
 };

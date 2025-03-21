@@ -10,6 +10,7 @@ import Products from './components/Products';
 import Carts from './components/Carts';
 import ProductDetail from './components/ProductDetail';
 import Wishlists from './components/Wishlist';
+import Transactions from './components/Transactions';
 import { ThemeProvider } from '@mui/material/styles';
 import { theme } from './utils/theme';
 
@@ -19,7 +20,7 @@ const pages = [
   { Display: 'Carts', url: 'carts' }
 ];
 
-const settings = ['Profile', 'Wishlist', 'Transaction', 'Logout'];
+const settings = ['Profile', 'Wishlist', 'Transactions', 'Logout'];
 
 function App() {
   return (
@@ -102,8 +103,8 @@ function MainComponent() {
       navigate('/wishlists');  // Navigate to Wishlist page
     } else if (setting === 'Logout') {
       handleLogout();
-    }
-    handleCloseUserMenu();
+    } else if (setting === 'Transactions')
+    navigate('/transactions')
   };
 
   return (
@@ -180,6 +181,7 @@ function MainComponent() {
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/ProductDetail/:productId" element={<ProductDetail />} />
         <Route path="/Wishlists" element={<Wishlists />} />
+        <Route path="/Transactions" element={<Transactions />} />
       </Routes>
     </div>
   );
